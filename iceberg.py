@@ -10,6 +10,8 @@ Statoil/C-CORE Iceberg Classifier Challenge (Kaggle)
 import json
 import numpy as np
 import keras
+import csv
+
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from keras.callbacks import ModelCheckpoint
@@ -36,11 +38,12 @@ for image in train_data:
 num_classes = 2
 
 images_train = np.array(images_train)
-labels_train = keras.utils.to_categorical(labels_train, num_classes)
+labels_train = keras.utils.to_categorical(labels_train)
 
 print (images_train[0].shape)
 
 # Building test data
+
 
 test_data_path = "C:\\Users\\Gary\\iceberg-classifier\\data\\test\\test.json"
 
@@ -58,6 +61,7 @@ for image in test_data:
 images_test = np.array(images_test)
 
 print(images_test.shape)
+
 
 # Define the Model Architecture
 
@@ -85,24 +89,33 @@ print (model.summary())
 
 # Compile the Model
 
-model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # Train the Model
 '''
 checkpointer = ModelCheckpoint(filepath='model.weights.best.hdf5', verbose=1, save_best_only=True)
 
-hist = model.fit(images_train, labels_train, batch_size = 32, epochs = 100,
+hist = model.fit(images_train, labels_train, batch_size = 32, epochs = 20,
                  validation_split = 0.5,
                  callbacks=[checkpointer], verbose=2, shuffle=True)
 '''
-
 # Load model
 
 model.load_weights('model.weights.best.hdf5')
 
 # Calculate accuracy on test set
 
-predictions = [model.predict(images_test)]
-predictions_with_id = list(zip(images_id_test, predictions))
 
-np.savetxt("sample_submission.csv", predictions_with_id, delimiter=",", header = "id,is_iceberg")
+predictions = [np.argmax(model.predict(np.expand_dims(image,axis=0))) for image in images_test] # predictions in "is_iceberg"
+
+print (predictions)
+
+print (len(predictions), len(images_id_test))
+
+
+with open('sample_submission.csv', 'w') as f:
+    writer = csv.writer(f)
+    writer.writerows(["id", "is_iceberg"])
+    writer.writerows(zip(images_id_test, predictions))
+
+# https://stackoverflow.com/questions/19302612/how-to-write-data-from-two-lists-into-columns-in-a-csv
