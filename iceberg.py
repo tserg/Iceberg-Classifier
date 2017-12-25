@@ -35,10 +35,10 @@ for image in train_data:
     labels_train.append(image['is_iceberg'])
     images_train.append(current_image)
 
-num_classes = 2
+num_classes = 1
 
 images_train = np.array(images_train)
-labels_train = keras.utils.to_categorical(labels_train)
+labels_train = np.array(labels_train)
 
 print (images_train[0].shape)
 
@@ -76,13 +76,20 @@ model.add(MaxPooling2D(pool_size=2))
 
 model.add(Conv2D(filters = 64, kernel_size = 2, padding = 'same', activation = 'relu'))
 model.add(MaxPooling2D(pool_size=2))
+
+model.add(Conv2D(filters = 128, kernel_size = 2, padding = 'same', activation = 'relu'))
+model.add(MaxPooling2D(pool_size=2))
+
+model.add(Conv2D(filters = 256, kernel_size = 2, padding = 'same', activation = 'relu'))
+model.add(MaxPooling2D(pool_size=2))
+
 model.add(Dropout(0.3))
 model.add(Flatten())
 
 model.add(Dense(500, activation = 'relu'))
 model.add(Dropout(0.3))
 
-model.add(Dense(2, activation="sigmoid"))
+model.add(Dense(1, activation="sigmoid"))
 
 
 print (model.summary())
@@ -95,27 +102,28 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']
 '''
 checkpointer = ModelCheckpoint(filepath='model.weights.best.hdf5', verbose=1, save_best_only=True)
 
-hist = model.fit(images_train, labels_train, batch_size = 32, epochs = 20,
+hist = model.fit(images_train, labels_train, batch_size = 32, epochs = 100,
                  validation_split = 0.5,
                  callbacks=[checkpointer], verbose=2, shuffle=True)
 '''
 # Load model
-
+'''
 model.load_weights('model.weights.best.hdf5')
 
 # Calculate accuracy on test set
 
 
-predictions = [np.argmax(model.predict(np.expand_dims(image,axis=0))) for image in images_test] # predictions in "is_iceberg"
+predictions = [model.predict(np.expand_dims(image,axis=0))[0][0] for image in images_test] # predictions in "is_iceberg"
 
 print (predictions)
 
 print (len(predictions), len(images_id_test))
 
 
-with open('sample_submission.csv', 'w') as f:
+with open('sample_submission.csv', 'w', newline='') as f:
     writer = csv.writer(f)
-    writer.writerows(["id", "is_iceberg"])
+    writer.writerow(["id", "is_iceberg"])
     writer.writerows(zip(images_id_test, predictions))
+'''
 
 # https://stackoverflow.com/questions/19302612/how-to-write-data-from-two-lists-into-columns-in-a-csv
