@@ -31,11 +31,9 @@ images_train = []
 labels_train = []
 
 for image in train_data:
-    current_image = np.reshape(image['band_1'], (75, 75, 1))
+    current_image_combined = np.reshape((image['band_1'] + image['band_2']), (75, 75, 2)) 
     labels_train.append(image['is_iceberg'])
-    images_train.append(current_image)
-
-num_classes = 1
+    images_train.append(current_image_combined)
 
 images_train = np.array(images_train)
 labels_train = np.array(labels_train)
@@ -54,22 +52,22 @@ images_test = []
 images_id_test = []
 
 for image in test_data:
-    current_image = np.reshape(image['band_1'], (75, 75, 1))
-    images_test.append(current_image)
+    current_image_combined = np.reshape((image['band_1'] + image['band_2']), (75, 75, 2))
+    images_test.append(current_image_combined)
     images_id_test.append(image['id'])
 
 images_test = np.array(images_test)
 
 print(images_test.shape)
 
-
 # Define the Model Architecture
 
 model = Sequential()
 
 model.add(Conv2D(filters = 16, kernel_size = 2, padding = 'same', activation='relu',
-                 input_shape=(75, 75, 1)))
+                 input_shape=(75, 75, 2)))
 model.add(MaxPooling2D(pool_size=2))
+model.add(Dropout(0.2))
 
 model.add(Conv2D(filters = 32, kernel_size = 2, padding = 'same', activation = 'relu'))
 model.add(MaxPooling2D(pool_size=2))
@@ -81,6 +79,9 @@ model.add(Conv2D(filters = 128, kernel_size = 2, padding = 'same', activation = 
 model.add(MaxPooling2D(pool_size=2))
 
 model.add(Conv2D(filters = 256, kernel_size = 2, padding = 'same', activation = 'relu'))
+model.add(MaxPooling2D(pool_size=2))
+
+model.add(Conv2D(filters = 512, kernel_size = 2, padding = 'same', activation = 'relu'))
 model.add(MaxPooling2D(pool_size=2))
 
 model.add(Dropout(0.3))
@@ -96,19 +97,19 @@ print (model.summary())
 
 # Compile the Model
 
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.compile(loss='binary_crossentropy', optimizer='adamax', metrics=['accuracy'])
 
 # Train the Model
-'''
-checkpointer = ModelCheckpoint(filepath='model.weights.best.hdf5', verbose=1, save_best_only=True)
 
-hist = model.fit(images_train, labels_train, batch_size = 32, epochs = 100,
-                 validation_split = 0.5,
+checkpointer = ModelCheckpoint(filepath='model_adamax.weights.best.hdf5', verbose=1, save_best_only=True)
+
+hist = model.fit(images_train, labels_train, batch_size = 100, epochs = 100,
+                 validation_split = 0.2,
                  callbacks=[checkpointer], verbose=2, shuffle=True)
-'''
+
 # Load model
-'''
-model.load_weights('model.weights.best.hdf5')
+
+model.load_weights('model_adamax.weights.best.hdf5')
 
 # Calculate accuracy on test set
 
@@ -120,10 +121,10 @@ print (predictions)
 print (len(predictions), len(images_id_test))
 
 
-with open('sample_submission.csv', 'w', newline='') as f:
+with open('submission_adamax.csv', 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(["id", "is_iceberg"])
     writer.writerows(zip(images_id_test, predictions))
-'''
+
 
 # https://stackoverflow.com/questions/19302612/how-to-write-data-from-two-lists-into-columns-in-a-csv
