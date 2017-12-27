@@ -90,6 +90,12 @@ model.add(Flatten())
 model.add(Dense(500, activation = 'relu'))
 model.add(Dropout(0.3))
 
+model.add(Dense(500, activation = 'relu')) # additional layer 1
+model.add(Dropout(0.3))
+
+model.add(Dense(500, activation = 'relu')) # additional layer 2
+model.add(Dropout(0.3))
+
 model.add(Dense(1, activation="sigmoid"))
 
 
@@ -97,11 +103,11 @@ print (model.summary())
 
 # Compile the Model
 
-model.compile(loss='binary_crossentropy', optimizer='adamax', metrics=['accuracy'])
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # Train the Model
 
-checkpointer = ModelCheckpoint(filepath='model_adamax.weights.best.hdf5', verbose=1, save_best_only=True)
+checkpointer = ModelCheckpoint(filepath='model_adam_2additional_dense.weights.best.hdf5', verbose=1, save_best_only=True)
 
 hist = model.fit(images_train, labels_train, batch_size = 100, epochs = 100,
                  validation_split = 0.2,
@@ -109,7 +115,7 @@ hist = model.fit(images_train, labels_train, batch_size = 100, epochs = 100,
 
 # Load model
 
-model.load_weights('model_adamax.weights.best.hdf5')
+model.load_weights('model_adam_2additional_dense.weights.best.hdf5')
 
 # Calculate accuracy on test set
 
@@ -121,7 +127,7 @@ print (predictions)
 print (len(predictions), len(images_id_test))
 
 
-with open('submission_adamax.csv', 'w', newline='') as f:
+with open('submission_adam_2additional_dense.csv', 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(["id", "is_iceberg"])
     writer.writerows(zip(images_id_test, predictions))
